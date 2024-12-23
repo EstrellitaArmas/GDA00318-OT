@@ -142,6 +142,64 @@ app.get('/products', authenticateToken, async (req, res) => {
 });
 
 
+// Endpoint para insertar una categoría
+app.post('/insertar-categoria',authenticateToken, async (req, res) => {
+    const { nombre, idEstado } = req.body;
+  
+    if (!nombre || !idEstado) {
+      return res.status(400).send('Faltan parámetros.');
+    }
+  
+    try {
+        const pool = app.get('dbPool');
+        const result = await pool.request()
+            .input('nombre', sql.NVarChar, nombre)
+            .input('idEstado', sql.Int, idEstado)
+            .input('idUsuario', sql.Int, req.user.id) 
+            .execute('InsertarCategoria');
+
+        res.status(200).json({ id: result.recordset[0], message: 'Categoría insertada con éxito.' });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('Error al insertar la categoría.');
+    }
+});
+  
+  // Endpoint para actualizar una categoría
+app.put('/actualizar-categoria', authenticateToken, async (req, res) => {
+    const { idCategoria, nombre, idEstado } = req.body;
+  
+    if (!idCategoria || !nombre || !idEstado) {
+      return res.status(400).send('Faltan parámetros.');
+    }
+    try {
+        const pool = app.get('dbPool');
+        const result = await pool.request()
+            .input('idCategoria', sql.Int, idCategoria)
+            .input('nombre', sql.NVarChar, nombre)
+            .input('idEstado', sql.Int, idEstado)
+            .input('idUsuario', sql.Int, req.user.id) 
+            .execute('ActualizarCategoria');
+
+            res.status(200).json({ id: result.recordset[0], message: 'Categoría actualizada con éxito.' });
+      } catch (error) {
+        console.error(error);
+        res.status(500).send('Error al actualizar la categoría.');
+      }
+});
+
+app.get('/categorias', authenticateToken, async (req, res) => {
+    try {
+        const pool = app.get('dbPool');
+        const result = await pool.request().query('SELECT * FROM Categorias;');
+        res.json(result.recordset);
+    } catch (err) {
+        console.error('Error al obtener categorias:', err);
+        res.status(500).send('Error interno del servidor.');
+    }
+});
+
+
 // Iniciar servidor
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en http://localhost:${PORT}`);

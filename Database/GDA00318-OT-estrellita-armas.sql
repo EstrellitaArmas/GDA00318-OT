@@ -539,6 +539,20 @@ AS
 BEGIN
     INSERT INTO Categorias (nombre,idUsuario,idEstado)
     VALUES (@nombre,@idUsuario,@idEstado)
+
+	-- Obtenemos el ID del producto insertado
+    DECLARE @idCategoria INT = SCOPE_IDENTITY();
+
+    -- Seleccionamos el producto insertado
+    SELECT c.idCategoria
+      ,c.nombre
+      ,c.fecha_creacion
+      ,c.fecha_modificacion
+      ,c.idUsuario
+      ,c.idEstado
+	  FROM Categorias c 
+	  WHERE c.idCategoria = @idCategoria
+
 END
 GO
 
@@ -555,6 +569,17 @@ BEGIN
 		idEstado = @idEstado,
         fecha_modificacion = GETDATE()
     WHERE idCategoria = @idCategoria
+
+	-- Devolvemos la categoria actualizada
+    SELECT c.idCategoria
+      ,c.nombre
+      ,c.fecha_creacion
+      ,c.fecha_modificacion
+      ,c.idUsuario
+      ,c.idEstado
+	  FROM Categorias c 
+	  WHERE c.idCategoria = @idCategoria
+
 END
 GO
 

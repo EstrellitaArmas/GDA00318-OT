@@ -265,6 +265,46 @@ BEGIN
 END;
 GO
 
+CREATE PROCEDURE AuthenticarUsuario
+    @correo NVARCHAR(100),
+    @password NVARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Variable para almacenar la contraseña hasheada de la base de datos
+    DECLARE @passwordHashed NVARCHAR(255);
+    
+    -- Buscar el usuario por correo
+    SELECT @passwordHashed = password
+    FROM Usuarios
+    WHERE correo = @correo;
+
+    -- Verificar si el correo existe
+    IF @passwordHashed IS NULL
+    BEGIN
+        -- Si no existe el usuario, devolver error 404
+        RAISERROR('Usuario no encontrado', 16, 1);
+        RETURN;
+    END
+    
+    -- Generar el hash de la contraseña proporcionada usando SHA2_256
+    DECLARE @hashedPassword NVARCHAR(255);
+    SET @hashedPassword =  HASHBYTES('SHA2_256', @password);
+
+    -- Comparar la contraseña proporcionada con la almacenada
+    IF @hashedPassword != @passwordHashed
+    BEGIN
+        -- Si las contraseñas no coinciden, devolver error 403
+        RAISERROR('Contraseña incorrecta', 16, 1);
+        RETURN;
+    END
+
+    -- Si la validación fue exitosa, devolver los detalles del usuario
+    SELECT idUsuario, nombre_completo, correo, telefono, fecha_nacimiento, fecha_creacion, fecha_modificacion, idEstado, idRol
+    FROM Usuarios
+    WHERE correo = @correo;
+END;
 
 CREATE PROCEDURE InsertarProducto
     @codigo NVARCHAR(100),

@@ -52,6 +52,20 @@ function authenticateToken(req, res, next) {
     });
 }
 
+function authorizeRole(requiredRole) {
+    return (req, res, next) => {
+        if (req.user.rol !== requiredRole) {
+            return res.status(403).send('No tiene permisos para acceder a este recurso.');
+        }
+        next();
+    };
+}
+
+//Encriptacion de contraseña
+function encryptPassword(password) {
+    return crypto.createHash('sha256').update(password).digest('hex');
+}
+
 // Rutas
 app.get('/', (req, res) => {
     res.send('¡Hola, mundo!');
@@ -72,20 +86,16 @@ app.post('/login', async (req, res) => {
         const user = result.recordset[0];
         if (!user) return res.sendStatus(404);        
 
-        const token = jwt.sign({ id: user.idUsuario, correo: user.correo }, SECRET_KEY, { expiresIn: '24h' });
+        const token = jwt.sign({ id: user.idUsuario, correo: user.correo , rol: user.idRol }, SECRET_KEY, { expiresIn: '24h' });
         res.json({ token });
     } catch (err) {
         console.error('Error en login:', err);
         res.status(500).send('Error interno del servidor.');
     }
 });
-//Encriptacion de contraseña
-function encryptPassword(password) {
-    return crypto.createHash('sha256').update(password).digest('hex');
-  }
 
 // 2.1.1 CRUD de Productos
-app.post('/saveproduct', authenticateToken, async (req, res) => {
+app.post('/saveproduct', authenticateToken, authorizeRole(2), async (req, res) => {
     const { codigo, nombre, descripcion, precio, stock, foto, idEstado, idMarca } = req.body;
     if (!codigo || !nombre || !descripcion || !precio || !stock || !foto || !idEstado || !idMarca) {
         return res.status(400).send('Faltan parámetros.');
@@ -111,7 +121,7 @@ app.post('/saveproduct', authenticateToken, async (req, res) => {
     }
 });
 
-app.put('/updateproduct', authenticateToken, async (req, res) => {
+app.put('/updateproduct', authenticateToken, authorizeRole(2), async (req, res) => {
     const { idProducto, codigo, nombre, descripcion, precio, stock, foto, idEstado, idMarca } = req.body;
 
     if (!idProducto || !codigo || !nombre || !descripcion || !precio || !stock || !foto || !idEstado || !idMarca) {
@@ -153,7 +163,7 @@ app.get('/products', authenticateToken, async (req, res) => {
 
 
 // Endpoint para insertar una categoría
-app.post('/insertar-categoria',authenticateToken, async (req, res) => {
+app.post('/insertar-categoria',authenticateToken, authorizeRole(2), async (req, res) => {
     const { nombre, idEstado } = req.body;
   
     if (!nombre || !idEstado) {
@@ -176,7 +186,7 @@ app.post('/insertar-categoria',authenticateToken, async (req, res) => {
 });
   
   // Endpoint para actualizar una categoría
-app.put('/actualizar-categoria', authenticateToken, async (req, res) => {
+app.put('/actualizar-categoria', authenticateToken, authorizeRole(2), async (req, res) => {
     const { idCategoria, nombre, idEstado } = req.body;
   
     if (!idCategoria || !nombre || !idEstado) {
@@ -210,7 +220,7 @@ app.get('/categorias', authenticateToken, async (req, res) => {
 });
 
 
-app.post('/insertarUsuario',  authenticateToken, async (req, res) => {
+app.post('/insertarUsuario',  authenticateToken, authorizeRole(2), async (req, res) => {
     const { nombre_completo, correo, password, telefono, fecha_nacimiento, idEstado, idRol } = req.body;
   
     try {
@@ -231,7 +241,7 @@ app.post('/insertarUsuario',  authenticateToken, async (req, res) => {
     }
   });
   
-app.put('/actualizarUsuario',  authenticateToken, async (req, res) => {
+app.put('/actualizarUsuario',  authenticateToken, authorizeRole(2), async (req, res) => {
     const { idUsuario, nombre_completo, correo, telefono, fecha_nacimiento, idEstado, idRol } = req.body;
 
     try {
@@ -307,7 +317,7 @@ app.post('/orden', authenticateToken, async (req, res) => {
 });
 
 // Endpoint para actualizar una orden existente con detalles
-app.put('/actualizar-orden', authenticateToken, async (req, res) => {
+app.put('/actualizar-orden', authenticateToken, authorizeRole(2), async (req, res) => {
     const {
         idOrden,
         fecha_entrega,

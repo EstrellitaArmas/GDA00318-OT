@@ -80,6 +80,68 @@ app.post('/login', async (req, res) => {
     }
 });
 
+// 2.1.1 CRUD de Productos
+app.post('/saveproduct', authenticateToken, async (req, res) => {
+    const { codigo, nombre, descripcion, precio, stock, foto, idEstado, idMarca } = req.body;
+    try {
+        console.log(codigo,nombre,descripcion,precio,stock,foto,idEstado,idMarca)
+        const pool = app.get('dbPool');
+        const result = await pool.request()
+        .input('codigo', sql.NVarChar, codigo)
+        .input('nombre', sql.NVarChar, nombre)
+        .input('descripcion', sql.NVarChar, descripcion)
+        .input('precio', sql.Decimal, precio)
+        .input('stock', sql.Int, stock)
+        .input('foto', sql.NVarChar, foto)
+        .input('idEstado', sql.Int, idEstado)
+        .input('idMarca', sql.Int, idMarca)
+        .input('idUsuario', sql.Int, req.user.id) 
+        .execute('InsertarProducto');
+
+        res.status(200).json({ id: result, message: 'Producto creado exitosamente.' });
+    } catch (err) {
+        console.error('Error al crear producto:', err);
+        res.status(500).send('Error interno del servidor.');
+    }
+});
+
+app.put('/updateproduct/:id', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    const { codigo, nombre, descripcion, precio, stock, foto, idEstado, idMarca } = req.body;
+    try {
+        const pool = app.get('dbPool');
+        const result = await pool.request()
+            .input('idProducto', sql.Int, id)
+            .input('codigo', sql.NVarChar, codigo)
+            .input('nombre', sql.NVarChar, nombre)
+            .input('descripcion', sql.NVarChar, descripcion)
+            .input('precio', sql.Decimal, precio)
+            .input('stock', sql.Int, stock)
+            .input('foto', sql.NVarChar, foto)
+            .input('idEstado', sql.Int, idEstado)
+            .input('idMarca', sql.Int, idMarca)
+            .input('idUsuario', sql.Int, req.user.id) 
+            .execute('ActualizarProducto');
+
+        res.status(200).json({ id: result.recordset[0], message: 'Producto actualizado exitosamente.' });
+    } catch (err) {
+        console.error('Error al actualizar producto:', err);
+        res.status(500).send('Error interno del servidor.');
+    }
+});
+
+app.get('/products', authenticateToken, async (req, res) => {
+    try {
+        const pool = app.get('dbPool');
+        const result = await pool.request().query('SELECT * FROM Productos;');
+        res.json(result.recordset);
+    } catch (err) {
+        console.error('Error al obtener productos:', err);
+        res.status(500).send('Error interno del servidor.');
+    }
+});
+
+
 // Iniciar servidor
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en http://localhost:${PORT}`);

@@ -305,6 +305,7 @@ BEGIN
     FROM Usuarios
     WHERE correo = @correo;
 END;
+GO
 
 CREATE PROCEDURE InsertarProducto
     @codigo NVARCHAR(100),
@@ -326,6 +327,16 @@ BEGIN
 
     INSERT INTO Productos (codigo, nombre, descripcion, precio, stock, foto, idEstado, idMarca,idUsuario)
     VALUES (@codigo, @nombre, @descripcion, @precio, @stock, @foto, @idEstado, @idMarca,@idUsuario)
+
+	-- Obtenemos el ID del producto insertado
+    DECLARE @idProducto INT = SCOPE_IDENTITY();
+
+    -- Seleccionamos el producto insertado
+    SELECT 
+        p.idProducto, p.codigo, p.nombre, p.descripcion, p.precio, p.stock, p.foto, p.idEstado, p.idMarca, p.idUsuario
+    FROM Productos p
+    WHERE p.idProducto = @idProducto;
+	
 END
 GO
 
@@ -361,6 +372,13 @@ BEGIN
 		idUsuario = @idUsuario,
 		fecha_modificacion = GETDATE()
     WHERE idProducto = @idProducto
+
+	 -- Seleccionamos el producto insertado
+    SELECT 
+        p.idProducto, p.codigo, p.nombre, p.descripcion, p.precio, p.stock, p.foto, p.idEstado, p.idMarca, p.idUsuario
+    FROM Productos p
+    WHERE p.idProducto = @idProducto;
+	
 END
 GO
 

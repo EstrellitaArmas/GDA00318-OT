@@ -685,7 +685,7 @@ BEGIN
 
         -- Actualizar el estado de los detalles existentes de la orden
         UPDATE DetalleOrden
-        SET idEstado = @idEstado
+        SET idEstado = 2 -- Estado inactivo
         WHERE idOrden = @idOrden;
 
         -- Insertar los nuevos detalles de la orden

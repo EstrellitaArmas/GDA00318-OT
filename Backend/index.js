@@ -266,7 +266,88 @@ app.put('/cambiarContrasena',  authenticateToken, async (req, res) => {
     }
 });
 
-  
+// Endpoint para insertar una nueva orden con detalles
+app.post('/orden', authenticateToken, async (req, res) => {
+    const {
+        fecha_entrega,
+        direccion_entrega,
+        cupon,
+        observaciones,
+        nombre,
+        direccion,
+        correo,
+        telefono,
+        total,
+        idEstado,
+        detalles,
+    } = req.body;
+
+    try {
+        const pool = await sql.connect(dbConfig);
+        await pool.request()
+            .input('fecha_entrega', sql.DateTime, fecha_entrega)
+            .input('direccion_entrega', sql.NVarChar(245), direccion_entrega)
+            .input('cupon', sql.NVarChar(100), cupon)
+            .input('observaciones', sql.NVarChar(100), observaciones)
+            .input('nombre', sql.NVarChar(100), nombre)
+            .input('direccion', sql.NVarChar(245), direccion)
+            .input('correo', sql.NVarChar(100), correo)
+            .input('telefono', sql.NVarChar(15), telefono)
+            .input('total', sql.Decimal(10, 2), total)
+            .input('idUsuario', sql.Int, req.user.id)
+            .input('idEstado', sql.Int, idEstado)
+            .input('detalles', sql.NVarChar(sql.MAX), JSON.stringify(detalles))
+            .execute('InsertarOrdenConDetalles');
+
+        res.status(201).json({ message: 'Orden creada exitosamente' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error al crear la orden' });
+    }
+});
+
+// Endpoint para actualizar una orden existente con detalles
+app.put('/actualizar-orden', authenticateToken, async (req, res) => {
+    const {
+        idOrden,
+        fecha_entrega,
+        direccion_entrega,
+        cupon,
+        observaciones,
+        nombre,
+        direccion,
+        correo,
+        telefono,
+        total,
+        idEstado,
+        detalles,
+    } = req.body;
+
+    try {
+        const pool = await sql.connect(dbConfig);
+        await pool.request()
+            .input('idOrden', sql.Int, idOrden)
+            .input('fecha_entrega', sql.DateTime, fecha_entrega)
+            .input('direccion_entrega', sql.NVarChar(245), direccion_entrega)
+            .input('cupon', sql.NVarChar(100), cupon)
+            .input('observaciones', sql.NVarChar(100), observaciones)
+            .input('nombre', sql.NVarChar(100), nombre)
+            .input('direccion', sql.NVarChar(245), direccion)
+            .input('correo', sql.NVarChar(100), correo)
+            .input('telefono', sql.NVarChar(15), telefono)
+            .input('total', sql.Decimal(10, 2), total)
+            .input('idUsuario', sql.Int, req.user.id)
+            .input('idEstado', sql.Int, idEstado)
+            .input('detalles', sql.NVarChar(sql.MAX), JSON.stringify(detalles))
+            .execute('ActualizarOrdenConDetalles');
+
+        res.status(200).json({ message: 'Orden actualizada exitosamente' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error al actualizar la orden' });
+    }
+});
+
 // Iniciar servidor
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en http://localhost:${PORT}`);

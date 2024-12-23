@@ -179,10 +179,15 @@ BEGIN
 
         -- Si el correo no existe, insertar el nuevo usuario
         INSERT INTO Usuarios (nombre_completo, correo, password, telefono, fecha_nacimiento, idEstado, idRol)
-		VALUES (@nombre_completo, @correo,HASHBYTES('SHA2_256', @password), @telefono, @fecha_nacimiento, @idEstado, @idRol)
+		VALUES (@nombre_completo, @correo, @password, @telefono, @fecha_nacimiento, @idEstado, @idRol)
 
-        -- Confirmar éxito
-        PRINT 'Usuario insertado correctamente.';
+		-- Obtenemos el ID del usuario insertado
+		DECLARE @idUsuario INT = SCOPE_IDENTITY();
+		-- Seleccionamos el producto insertado
+		SELECT nombre_completo, correo, telefono, fecha_nacimiento, idEstado, idRol
+		  FROM Usuarios 
+		  WHERE idUsuario = @idUsuario
+
     END TRY
     BEGIN CATCH
         -- Manejo de errores
@@ -230,8 +235,10 @@ BEGIN
 			fecha_modificacion = GETDATE()
 		WHERE idUsuario = @idUsuario
 
-        -- Confirmar éxito
-        PRINT 'Usuario actualizado correctamente.';
+        SELECT nombre_completo, correo, telefono, fecha_nacimiento, idEstado, idRol
+		  FROM Usuarios 
+		  WHERE idUsuario = @idUsuario
+
     END TRY
     BEGIN CATCH
         -- Manejo de errores
@@ -257,7 +264,7 @@ BEGIN
 
     -- Actualizar la contraseña del usuario
     UPDATE Usuarios
-    SET password = HASHBYTES('SHA2_256', @nuevaPassword),
+    SET password =  @nuevaPassword,
         fecha_modificacion = GETDATE()
     WHERE correo = @correo;
 
@@ -290,7 +297,7 @@ BEGIN
     
     -- Generar el hash de la contraseña proporcionada usando SHA2_256
     DECLARE @hashedPassword NVARCHAR(255);
-    SET @hashedPassword =  HASHBYTES('SHA2_256', @password);
+    SET @hashedPassword =  @password;
 
     -- Comparar la contraseña proporcionada con la almacenada
     IF @hashedPassword != @passwordHashed

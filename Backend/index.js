@@ -66,7 +66,7 @@ app.post('/login', async (req, res) => {
         const pool = app.get('dbPool');
         const result = await pool.request()
             .input('correo', sql.NVarChar, correo)
-            .input('password', sql.NVarChar, password)
+            .input('password', sql.NVarChar,  encryptPassword(password))
             .execute('AuthenticarUsuario');
 
         const user = result.recordset[0];
@@ -79,6 +79,10 @@ app.post('/login', async (req, res) => {
         res.status(500).send('Error interno del servidor.');
     }
 });
+//Encriptacion de contraseña
+function encryptPassword(password) {
+    return crypto.createHash('sha256').update(password).digest('hex');
+  }
 
 // 2.1.1 CRUD de Productos
 app.post('/saveproduct', authenticateToken, async (req, res) => {
@@ -206,6 +210,63 @@ app.get('/categorias', authenticateToken, async (req, res) => {
 });
 
 
+app.post('/insertarUsuario',  authenticateToken, async (req, res) => {
+    const { nombre_completo, correo, password, telefono, fecha_nacimiento, idEstado, idRol } = req.body;
+  
+    try {
+      const pool = await sql.connect(dbConfig);
+      const result = await pool.request()
+        .input('nombre_completo', sql.NVarChar, nombre_completo)
+        .input('correo', sql.NVarChar, correo)
+        .input('password', sql.NVarChar, encryptPassword(password))
+        .input('telefono', sql.NVarChar, telefono)
+        .input('fecha_nacimiento', sql.DateTime, fecha_nacimiento)
+        .input('idEstado', sql.Int, idEstado)
+        .input('idRol', sql.Int, idRol)
+        .execute('InsertarUsuario');
+      
+        res.status(200).json({ id: result.recordset[0], message: 'Usuario insertado correctamente.' });
+    } catch (err) {
+      res.status(500).send({ error: 'Error al insertar el usuario.', details: err.message });
+    }
+  });
+  
+app.put('/actualizarUsuario',  authenticateToken, async (req, res) => {
+    const { idUsuario, nombre_completo, correo, telefono, fecha_nacimiento, idEstado, idRol } = req.body;
+
+    try {
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request()
+        .input('idUsuario', sql.Int, idUsuario)
+        .input('nombre_completo', sql.NVarChar, nombre_completo)
+        .input('correo', sql.NVarChar, correo)
+        .input('telefono', sql.NVarChar, telefono)
+        .input('fecha_nacimiento', sql.DateTime, fecha_nacimiento)
+        .input('idEstado', sql.Int, idEstado)
+        .input('idRol', sql.Int, idRol)
+        .execute('ActualizarUsuario');
+        res.status(200).json({ id: result.recordset[0], message: 'Usuario actualizado correctamente.' });
+    } catch (err) {
+        res.status(500).send({ error: 'Error al actualizar el usuario.', details: err.message });
+    }
+});
+  
+app.put('/cambiarContrasena',  authenticateToken, async (req, res) => {
+    const { correo, nuevaPassword } = req.body;
+  
+    try {
+      const pool = await sql.connect(dbConfig);
+      await pool.request()
+        .input('correo', sql.NVarChar, correo)
+        .input('nuevaPassword', sql.NVarChar, encryptPassword(nuevaPassword))
+        .execute('CambiarContrasenaUsuario');
+      res.send({ message: 'Contraseña actualizada correctamente.' });
+    } catch (err) {
+      res.status(500).send({ error: 'Error al actualizar la contraseña.', details: err.message });
+    }
+});
+
+  
 // Iniciar servidor
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en http://localhost:${PORT}`);

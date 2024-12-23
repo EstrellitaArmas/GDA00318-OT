@@ -83,8 +83,10 @@ app.post('/login', async (req, res) => {
 // 2.1.1 CRUD de Productos
 app.post('/saveproduct', authenticateToken, async (req, res) => {
     const { codigo, nombre, descripcion, precio, stock, foto, idEstado, idMarca } = req.body;
-    try {
-        console.log(codigo,nombre,descripcion,precio,stock,foto,idEstado,idMarca)
+    if (!codigo || !nombre || !descripcion || !precio || !stock || !foto || !idEstado || !idMarca) {
+        return res.status(400).send('Faltan parámetros.');
+    }  
+    try {          
         const pool = app.get('dbPool');
         const result = await pool.request()
         .input('codigo', sql.NVarChar, codigo)
@@ -105,9 +107,13 @@ app.post('/saveproduct', authenticateToken, async (req, res) => {
     }
 });
 
-app.put('/updateproduct/:id', authenticateToken, async (req, res) => {
-    const { id } = req.params;
-    const { codigo, nombre, descripcion, precio, stock, foto, idEstado, idMarca } = req.body;
+app.put('/updateproduct', authenticateToken, async (req, res) => {
+    const { idProducto, codigo, nombre, descripcion, precio, stock, foto, idEstado, idMarca } = req.body;
+
+    if (!idProducto || !codigo || !nombre || !descripcion || !precio || !stock || !foto || !idEstado || !idMarca) {
+        return res.status(400).send('Faltan parámetros.');
+    }
+
     try {
         const pool = app.get('dbPool');
         const result = await pool.request()
